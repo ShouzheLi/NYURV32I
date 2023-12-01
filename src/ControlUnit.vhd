@@ -47,6 +47,9 @@ architecture Behavioral of Control_Unit is
     signal write_addr : STD_LOGIC_VECTOR(4 downto 0);
     signal reg_write : STD_LOGIC;
     
+    -- 信号用于连接数据存储器实例
+    signal mem_read_data : STD_LOGIC_VECTOR(31 downto 0);
+    
     -- PC 模块实例化
     component ProgramCounter is
         Port (
@@ -111,7 +114,46 @@ architecture Behavioral of Control_Unit is
         read_data1 : out STD_LOGIC_VECTOR(31 downto 0);
         read_data2 : out STD_LOGIC_VECTOR(31 downto 0)
     );
-end component;
+    end component;
+
+    -- 实例化数据存储器组件
+    component data_memory is
+        Port (
+            clk : in STD_LOGIC;
+            rst : in STD_LOGIC;
+            readcontrol : in STD_LOGIC_VECTOR(2 downto 0);
+            writecontrol : in STD_LOGIC_VECTOR(2 downto 0);
+            address : in STD_LOGIC_VECTOR(31 downto 0);
+            writedata : in STD_LOGIC_VECTOR(31 downto 0);
+            read_data : out STD_LOGIC_VECTOR(31 downto 0)
+        );
+    end component;
+
+    -- Define signal types for instruction types and control signals
+    type Instruction_Type is record
+        R : std_logic;
+        Ii : std_logic;
+        S : std_logic;
+        L : std_logic;
+        B : std_logic;
+        auipc : std_logic;
+        lui : std_logic;
+        jal : std_logic;
+        jalr : std_logic;
+        halt : std_logic;
+    end record;
+
+    type Control_Signals_Type is record
+        immsrc : std_logic_vector(2 downto 0);
+        sel_A : std_logic;
+        sel_B : std_logic;
+        wb_sel : std_logic_vector(1 downto 0);
+        reg_wr : std_logic;
+        hlt : std_logic;
+    end record;
+    
+    signal Instruction : Instruction_Type;
+    signal Control : Control_Signals_Type;
     
 begin
     -- PC 模块实例化
@@ -168,8 +210,20 @@ begin
             rst => rst,
             reg_write => reg_write,
             write_data => write_data,
-            write_addr => write_addr,
+            write_addr => write_addr
             -- 如果需要，还需要连接读取端口
+    );
+    
+    -- 实例化数据存储器
+    data_mem_instance : data_memory
+        port map (
+            clk => clk,
+            rst => rst,
+            readcontrol => readcontrol,
+            writecontrol => writecontrol,
+            address => aluresult,  -- 假设aluresult是计算出的有效地址
+            writedata => srcB,     -- 假设srcB是要写入的数据
+            read_data => mem_read_data  -- 读出的数据将被存放在这个信号中
         );
 
     -- FSM 实现
@@ -216,31 +270,108 @@ begin
                     
                     case opcode is
                         when "0010011" =>  -- I-type Arithmetic
-                            immsrc <= "001"; -- 立即数源
-                            alu_op <= "0000"; -- ALU 操作（例如：ADD）
-                            reg_wr <= '1'; -- 寄存器写入
-                            sel_A <= '0'; -- 选择 A 源
-                            sel_B <= '1'; -- 选择 B 源（立即数）
-                            wb_sel <= "01"; -- 写回选择
-                            -- 其他控制信号...
+                            immsrc <= "001"; -- Immediate source for I-type instructions
+                            alu_op <= "0000"; -- ALU operation for ADD
+                            reg_wr <= '1'; -- Enable register write
+                            sel_A <= '0'; -- Select source A from register
+                            sel_B <= '1'; -- Select source B from immediate value
+                            wb_sel <= "01"; -- Write-back selection for ALU result
+                            -- Other control signals...
                 
                         when "0110011" =>  -- R-type Arithmetic
-                            immsrc <= "000"; -- 立即数源
-                            -- ALU 操作基于 funct3 和 funct7
+                            immsrc <= "000"; -- No immediate for R-type instructions
+                            -- ALU operation based on funct3 and funct7
                             if funct7 = "0100000" and funct3 = "000" then
-                                alu_op <= "0001"; -- 例如：SUB
+                                alu_op <= "0001"; -- ALU operation for SUB
                             else
-                                alu_op <= "0000"; -- 例如：ADD
+                                alu_op <= "0000"; -- ALU operation for ADD
                             end if;
-                            reg_wr <= '1'; -- 寄存器写入
-                            sel_A <= '0'; -- 选择 A 源
-                            sel_B <= '0'; -- 选择 B 源（寄存器）
-                            wb_sel <= "00"; -- 写回选择
-                            -- 其他控制信号...
+                            reg_wr <= '1'; -- Enable register write
+                            sel_A <= '0'; -- Select source A from register
+                            sel_B <= '0'; -- Select source B from register
+                            wb_sel <= "00"; -- Write-back selection for ALU result
+                            -- Other control signals...
+                            
+                       when "0000011" =>  -- Load instructions (assuming opcode "3" is for loads)
+                            immsrc <= "001"; -- Load instructions use I-type immediates
+                            alu_op <= "0000"; -- ALU operation (e.g., ADD for calculating effective address)
+                            reg_wr <= '1'; -- Enable register write for loading data into register
+                            sel_A <= '0'; -- Select source A from register (base address)
+                            sel_B <= '1'; -- Select source B from immediate (offset)
+                            wb_sel <= "10"; -- Write-back selection for data from memory
+                            readcontrol <= funct3; -- Read control for type of load (byte, halfword, word)
+                            writecontrol <= "000"; -- No write operation for load instructions
+                            -- Other control signals...
+                            br_type <= "000"; -- No branch
+                           
                 
+                        when "0100011" =>  -- Store instructions (assuming opcode "35" is for stores)
+                            immsrc <= "010"; -- Store instructions use S-type immediates
+                            alu_op <= "0000"; -- ALU operation (e.g., ADD for calculating effective address)
+                            reg_wr <= '0'; -- Disable register write for store instructions
+                            sel_A <= '0'; -- Select source A from register (base address)
+                            sel_B <= '1'; -- Select source B from immediate (offset)
+                            wb_sel <= "00"; -- No write-back to registers for store instructions
+                            writecontrol <= funct3; -- Write control for type of store (byte, halfword, word)
+                            readcontrol <= "000"; -- No read operation for store instructions
+                            -- Other control signals...
+                            br_type <= "000"; -- No branch
+           
+                         when "1100011" =>  -- Branch instructions (assuming opcode "99" is for branches)
+                            immsrc <= "010"; -- Branch instructions use B-type immediates
+                            alu_op <= "0010"; -- ALU operation for SUB to compare registers
+                            reg_wr <= '0'; -- No register write for branch instructions
+                            sel_A <= '0'; -- Select source A from register
+                            sel_B <= '0'; -- Select source B from register
+                            br_type <= funct3; -- Branch type based on funct3 (BEQ, BNE, BLT, etc.)
+                            wb_sel <= "00"; -- No write-back for branch instructions
+                            -- No memory read or write for branch instructions
+                            readcontrol <= "000";
+                            writecontrol <= "000";
+                
+                        when "0110111" =>  -- LUI instruction (assuming opcode "55" is for LUI)
+                            immsrc <= "011"; -- LUI uses U-type immediate
+                            alu_op <= "1010"; -- ALU operation for LUI (simply passing the immediate value)
+                            reg_wr <= '1'; -- Enable register write for LUI instruction
+                            sel_A <= '0'; -- Not used for LUI
+                            sel_B <= '1'; -- Select source B as immediate value
+                            wb_sel <= "01"; -- Write-back selection for ALU result (which is immediate for LUI)
+                            -- No memory read or write for LUI
+                            readcontrol <= "000";
+                            writecontrol <= "000";
+                            -- No branch for LUI
+                            br_type <= "000";
+                            
+                        when "1101111" =>  -- JAL instruction (assuming opcode "111" is for JAL)
+                            immsrc <= "100"; -- JAL uses J-type immediates
+                            alu_op <= "1011"; -- ALU operation for JAL (typically just adding offset to PC)
+                            reg_wr <= '1'; -- Enable register write for JAL instruction (link register)
+                            sel_A <= '0'; -- Select source A from PC
+                            sel_B <= '1'; -- Select source B as immediate value
+                            wb_sel <= "11"; -- Write-back selection for PC + 4 (return address)
+                            -- No memory read or write for JAL
+                            readcontrol <= "000";
+                            writecontrol <= "000";
+                            -- No branch type needed for JAL
+                            br_type <= "000";
+                
+                        when "1100111" =>  -- JALR instruction (assuming opcode "103" is for JALR)
+                            immsrc <= "001"; -- JALR uses I-type immediates
+                            alu_op <= "1011"; -- ALU operation for JALR (adding offset to register value)
+                            reg_wr <= '1'; -- Enable register write for JALR instruction (link register)
+                            sel_A <= '0'; -- Select source A from register (base address)
+                            sel_B <= '1'; -- Select source B as immediate value
+                            wb_sel <= "11"; -- Write-back selection for PC + 4 (return address)
+                            -- No memory read or write for JALR
+                            readcontrol <= "000";
+                            writecontrol <= "000";
+                            -- No branch type needed for JALR
+                            br_type <= "000";
+
+                            
                         -- 其他指令类型...
                         when others =>
-                            -- 默认控制信号
+                            -- Default control signals for unrecognized opcode
                             immsrc <= (others => '0');
                             alu_op <= (others => '0');
                             br_type <= (others => '0');
@@ -251,54 +382,60 @@ begin
                             sel_B <= '0';
                             hlt <= '0';
                             wb_sel <= (others => '0');
+                            -- Optionally set halt signal if invalid opcode
+                            -- hlt <= '1';
                     end case;
                     state <= EX;
                 when EX =>
                     -- 执行逻辑
                     -- ... (从 datapath.v 提取和转换)
-                        -- 根据指令类型选择ALU操作
-                        -- 例如，如果指令是加法，则设置ALU的选择信号为加法
-                        alu_op <= 0; -- 从译码阶段得到的ALU操作码
-                        -- 设置ALU的操作数
-                        alu_a <= srcA; -- 可能是寄存器的输出或立即数
-                        alu_b <= srcB; -- 可能是寄存器的输出或立即数
-                    
-                        -- 评估分支条件
-                        -- 例如，如果指令是分支指令，则设置分支单元的输入并读取其输出
-                        br_taken <= 0; -- 分支单元的输出
-                    
-                        -- 如果指令需要访问内存，则设置内存访问的控制信号
-                        -- 如果指令需要写回结果，则设置写回阶段的控制信号
-                    
-                        -- 在执行完必要的操作后，转到下一个状态
-                        -- 如果有分支且分支被采纳，则可能需要更新PC值
-                        if br_taken = '1' then
-                            -- 更新PC值为分支目标地址
-                            PC <= 0;
-                        end if;
-                    
-                        -- 根据当前指令的需要，转到下一个阶段
-                        state <= MEM; -- 转到内存访问阶段，或者如果指令不需要访问内存，则直接转到写回阶段
+                    -- 根据指令类型选择ALU操作
+                    -- 例如，如果指令是加法，则设置ALU的选择信号为加法
+--                        alu_op <= "0000"; -- 从译码阶段得到的ALU操作码
+                    -- 设置ALU的操作数
+                    alu_a <= srcA; -- 可能是寄存器的输出或立即数
+                    alu_b <= srcB; -- 可能是寄存器的输出或立即数
+                
+                    -- 评估分支条件
+                    -- 例如，如果指令是分支指令，则设置分支单元的输入并读取其输出
+--                        br_taken <= 0; -- 分支单元的输出
+                
+                    -- 如果指令需要访问内存，则设置内存访问的控制信号
+                    -- 如果指令需要写回结果，则设置写回阶段的控制信号
+                
+                    -- 在执行完必要的操作后，转到下一个状态
+                    -- 如果有分支且分支被采纳，则可能需要更新PC值
+                    if br_taken = '1' then
+                        -- 更新PC值为分支目标地址
+                        PC <= PCPlus4;
+                    end if;
+                
+                    -- 根据当前指令的需要，转到下一个阶段
+                    state <= MEM; -- 转到内存访问阶段，或者如果指令不需要访问内存，则直接转到写回阶段
                 when MEM =>
-                    -- 存储器访问逻辑
-                    -- ... (从 datapath.v 提取和转换)
-                        -- 存储器访问逻辑
+                    -- Memory access logic
                     if readcontrol /= "000" then
-                        -- 根据 readcontrol 信号，从数据存储器读取数据
-                        -- 将读取的数据分配给一个内部信号，以便在写回阶段使用
+                        -- If readcontrol is not "000", it indicates a read operation.
+                        -- The actual reading happens in the data_memory component,
+                        -- and the result is available in mem_read_data, which is connected to the read_data output of the data_memory instance.
+                        -- Assuming mem_read_data is declared and connected properly, no additional logic is needed here.
+                        -- However, if you need to handle the data differently based on the type of read (byte, halfword, word), you would add that logic here.
                     elsif writecontrol /= "000" then
-                        -- 根据 writecontrol 信号，将数据写入数据存储器
-                        -- 写入的数据可能来自ALU的结果或其他来源
+                        -- If writecontrol is not "000", it indicates a write operation.
+                        -- The actual writing happens in the data_memory component,
+                        -- and the data to be written should be provided to the writedata input of the data_memory instance.
+                        -- This value could be the result of the ALU operation or some other data source.
+                        -- Since the data_memory instance should already be connected to the appropriate signals, no additional logic is needed here.
                     end if;
                     
-                    -- 在完成存储器访问后，转到下一个状态
-                    state <= WB; -- 转到写回阶段
+                    -- After completing the memory access, move to the next state.
+                    state <= WB; -- Go to the Write Back stage.
                 when WB =>
                     -- 写回逻辑
                     -- ... (从 datapath.v 提取和转换)
                             -- Write back logic
                     reg_write <= '1';  -- Enable writing to the register file
-                    write_addr <= destination_register;  -- 设置目标寄存器地址
+--                    write_addr <= destination_register;  -- 设置目标寄存器地址
                     -- write_data is already selected by the mux_wb_instance
                     -- ...
             
