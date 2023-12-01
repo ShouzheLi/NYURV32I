@@ -29,20 +29,66 @@ begin
         zero <= '0';
 
         case alu_sel is
-            when "0000" =>  -- add
+            when "0000" =>  -- ADD
                 temp_result <= std_logic_vector(temp_a + temp_b);
                 -- Check for overflow
                 if temp_a(31) = temp_b(31) and temp_result(31) /= temp_a(31) then
                     overload <= '1';
                 end if;
 
-            when "0001" =>  -- sub
+            when "0001" =>  -- SUB
                 temp_result <= std_logic_vector(temp_a - temp_b);
                 -- Check for overflow
                 if temp_a(31) /= temp_b(31) and temp_result(31) /= temp_a(31) then
                     overload <= '1';
                 end if;
 
+            when "0010" =>  -- SLL (Shift Left Logical)
+                temp_result <= std_logic_vector(shift_left(unsigned(a), to_integer(unsigned(b(4 downto 0)))));
+                overload <= '0';  -- Shift operations do not cause overflow
+            
+            when "0011" =>  -- SLT (Set Less Than)
+                temp_result <= std_logic_vector(to_unsigned(0, 32));
+                if temp_a < temp_b then
+                    temp_result(0) <= '1';
+                else 
+                    temp_result(0) <= '0';
+                end if;
+                overload <= '0';  -- Comparison does not cause overflow
+            
+            when "0100" =>  -- SLTU (Set Less Than Signed)
+                temp_result <= std_logic_vector(to_unsigned(0, 32));
+                if unsigned(a) < unsigned(b) then
+                    temp_result(0) <= '1';
+                else 
+                    temp_result(0) <= '0';
+                end if;
+                overload <= '0';  -- Comparison does not cause overflow
+            
+            when "0101" =>  -- XOR
+                temp_result <= a xor b;
+                overload <= '0';  -- Logical operation does not cause overflow
+            
+            when "0110" =>  -- SRL (Shift Right Logical)
+                temp_result <= std_logic_vector(shift_right(unsigned(a), to_integer(unsigned(b(4 downto 0)))));
+                overload <= '0';  -- Shift operations do not cause overflow
+            
+            when "0111" =>  -- SRA (Shift Right Arithmetic)
+                temp_result <= std_logic_vector(shift_right(signed(a), to_integer(unsigned(b(4 downto 0)))));
+                overload <= '0';  -- Shift operations do not cause overflow
+            
+            when "1000" =>  -- OR
+                temp_result <= a or b;
+                overload <= '0';  -- Logical operation does not cause overflow
+            
+            when "1001" =>  -- AND
+                temp_result <= a and b;
+                overload <= '0';  -- Logical operation does not cause overflow
+            
+            -- when others =>
+                -- temp_result <= (others => '0');
+                -- overload <= '0';  -- Default case does not cause overflow
+            
             -- Other cases remain the same...
 
         end case;
