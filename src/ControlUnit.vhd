@@ -5,28 +5,27 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity Control_Unit is
     Port (
---        immsrc : out STD_LOGIC_VECTOR(2 downto 0);
---        alu_op : out STD_LOGIC_VECTOR(3 downto 0);
---        br_type : out STD_LOGIC_VECTOR(2 downto 0);
---        readcontrol : out STD_LOGIC_VECTOR(2 downto 0);
---        writecontrol : out STD_LOGIC_VECTOR(2 downto 0);
---        reg_wr : out STD_LOGIC;
---        sel_A : out STD_LOGIC;
---        sel_B : out STD_LOGIC;
-        hlt : out STD_LOGIC;
---        wb_sel : out STD_LOGIC_VECTOR(1 downto 0);
---        opcode : in STD_LOGIC_VECTOR(6 downto 0);
---        funct3 : in STD_LOGIC_VECTOR(2 downto 0);
---        funct7 : in STD_LOGIC_VECTOR(6 downto 0);
-        rst : in STD_LOGIC;
-        clk : in STD_LOGIC
+        -- Uncomment below if these signals are used
+        -- immsrc : out STD_LOGIC_VECTOR(2 downto 0);
+        -- alu_op : out STD_LOGIC_VECTOR(3 downto 0);
+        -- br_type : out STD_LOGIC_VECTOR(2 downto 0);
+        -- readcontrol : out STD_LOGIC_VECTOR(2 downto 0);
+        -- writecontrol : out STD_LOGIC_VECTOR(2 downto 0);
+        -- reg_wr : out STD_LOGIC;
+        -- sel_A : out STD_LOGIC;
+        -- sel_B : out STD_LOGIC;
+        hlt : out STD_LOGIC;  -- Halt signal
+        -- wb_sel : out STD_LOGIC_VECTOR(1 downto 0);
+        -- opcode : in STD_LOGIC_VECTOR(6 downto 0);
+        -- funct3 : in STD_LOGIC_VECTOR(2 downto 0);
+        -- funct7 : in STD_LOGIC_VECTOR(6 downto 0);
+        rst : in STD_LOGIC;   -- Reset signal
+        clk : in STD_LOGIC    -- Clock signal
     );
-
-
 end Control_Unit;
 
 architecture Behavioral of Control_Unit is
-    -- 状态和信号定义
+    -- Definition of states and signals
     type State_Type is (IFI, ID, EX, MEM, WB);
     signal State : State_Type;
     signal PC, PCNext, PCPlus4, immext, srcA, rd1, rd2, srcB, rdata, aluresult : std_logic_vector(31 downto 0);
@@ -37,20 +36,17 @@ architecture Behavioral of Control_Unit is
     signal immsrc, br_type, readcontrol, writecontrol : std_logic_vector(2 downto 0);
     signal wb_sel : std_logic_vector(1 downto 0);
     signal alu_op : std_logic_vector(3 downto 0);
-    -- 其他信号定义...
+    -- Other signal definitions...
     signal instr : std_logic_vector(31 downto 0);
-    
+
     signal alu_zero, alu_overload : STD_LOGIC;
     signal alu_a, alu_b, alu_result : STD_LOGIC_VECTOR(31 downto 0);
-    
+
     signal write_data : STD_LOGIC_VECTOR(31 downto 0);
     signal write_addr : STD_LOGIC_VECTOR(4 downto 0);
     signal reg_write : STD_LOGIC;
-    
-    -- 信号用于连接数据存储器实例
-    signal mem_read_data : STD_LOGIC_VECTOR(31 downto 0);
-    
-    -- PC 模块实例化
+
+    -- Instance declaration of Program Counter
     component ProgramCounter is
         Port (
             pc : out std_logic_vector(31 downto 0);
@@ -59,16 +55,16 @@ architecture Behavioral of Control_Unit is
             pc_next : in std_logic_vector(31 downto 0)
         );
     end component;
-    
-    -- 指令内存模块实例化
+
+    -- Instance declaration of Instruction Memory
     component InstructionMemory is
         Port (
             addr : in STD_LOGIC_VECTOR(31 downto 0);
             instr : out STD_LOGIC_VECTOR(31 downto 0)
         );
     end component;
-    
-    -- 指令提取模块实例化
+
+    -- Instance declaration of Instruction Fetch
     component instruction_fetch is
         Port (
             instr : in std_logic_vector(31 downto 0);
@@ -81,7 +77,7 @@ architecture Behavioral of Control_Unit is
             imm : out std_logic_vector(24 downto 0)
         );
     end component;
-    
+
     -- ALU component declaration
     component alu is
         Port (
@@ -93,7 +89,7 @@ architecture Behavioral of Control_Unit is
             overload : out STD_LOGIC
         );
     end component;
-    
+
     -- Branch determining unit component declaration
     component branch_determining_unit is
         Port (
@@ -103,20 +99,19 @@ architecture Behavioral of Control_Unit is
             branch_taken : out STD_LOGIC
         );
     end component;
-    
-    component register_file is
-    Port (
-        clk : in STD_LOGIC;
-        rst : in STD_LOGIC;
-        reg_write : in STD_LOGIC;
-        write_data : in STD_LOGIC_VECTOR(31 downto 0);
-        write_addr : in STD_LOGIC_VECTOR(4 downto 0);
-        read_data1 : out STD_LOGIC_VECTOR(31 downto 0);
-        read_data2 : out STD_LOGIC_VECTOR(31 downto 0)
-    );
-    end component;
 
-    -- 实例化数据存储器组件
+    component register_file is
+        Port (
+            clk : in STD_LOGIC;
+            rst : in STD_LOGIC;
+            reg_write : in STD_LOGIC;
+            write_data : in STD_LOGIC_VECTOR(31 downto 0);
+            write_addr : in STD_LOGIC_VECTOR(4 downto 0);
+            read_data1 : out STD_LOGIC_VECTOR(31 downto 0);
+            read_data2 : out STD_LOGIC_VECTOR(31 downto 0)
+        );
+    end component;
+    
     component data_memory is
         Port (
             clk : in STD_LOGIC;
@@ -128,6 +123,7 @@ architecture Behavioral of Control_Unit is
             read_data : out STD_LOGIC_VECTOR(31 downto 0)
         );
     end component;
+
 
     -- Define signal types for instruction types and control signals
     type Instruction_Type is record
@@ -151,26 +147,26 @@ architecture Behavioral of Control_Unit is
         reg_wr : std_logic;
         hlt : std_logic;
     end record;
-    
+
     signal Instruction : Instruction_Type;
     signal Control : Control_Signals_Type;
-    
+
 begin
-    -- PC 模块实例化
+    -- Instantiation of Program Counter
     P_C : ProgramCounter Port Map (
         pc => PC,
         clk => clk,
         rst => rst,
         pc_next => PCNext
     );
-    
-    -- 指令内存实例化
+
+    -- Instantiation of Instruction Memory
     InstMem : InstructionMemory Port Map (
         addr => PC,
         instr => instr
     );
-    
-        -- 实例化指令提取模块
+
+    -- Instantiation of Instruction Fetch
     InstFetch: instruction_fetch Port Map (
         instr => instr,
         opcode => opcode,
@@ -181,8 +177,8 @@ begin
         funct7 => funct7,
         imm => immsrc
     );
-    
-        -- Instance of ALU
+
+    -- Instance of ALU
     alu_instance : alu
         Port Map (
             a => alu_a,
@@ -192,7 +188,7 @@ begin
             zero => alu_zero,
             overload => alu_overload
         );
-    
+
     -- Instance of Branch Determining Unit
     branch_unit_instance : branch_determining_unit
         Port Map (
@@ -201,8 +197,7 @@ begin
             branch_type => br_type,
             branch_taken => br_taken
         );
-        
-    
+
     -- Instance of Register File for write back operation
     reg_file_instance : register_file
         Port Map (
@@ -211,22 +206,22 @@ begin
             reg_write => reg_write,
             write_data => write_data,
             write_addr => write_addr
-            -- 如果需要，还需要连接读取端口
-    );
+            -- Connect read ports if necessary
+        );
     
-    -- 实例化数据存储器
-    data_mem_instance : data_memory
-        port map (
+    -- Instance of Register File for write back operation
+    data_memory_instance : data_memory
+        Port Map (
             clk => clk,
             rst => rst,
             readcontrol => readcontrol,
             writecontrol => writecontrol,
-            address => aluresult,  -- 假设aluresult是计算出的有效地址
-            writedata => srcB,     -- 假设srcB是要写入的数据
-            read_data => mem_read_data  -- 读出的数据将被存放在这个信号中
+            address => write_addr,
+            writedata => write_data,
+            read_data => rdata
         );
 
-    -- FSM 实现
+    -- FSM implementation
     process (clk, rst)
     begin
         if rst = '1' then
@@ -247,31 +242,44 @@ begin
         elsif rising_edge(clk) then
             case State is
                 when IFI =>
-                    -- 取指逻辑
-                    -- ... (从 datapath.v 提取和转换)
+                    -- Index Logic
 
-                    -- instr 已由指令内存模块提供
+                    -- instr already provided by PC
                     PCPlus4 <= PC + "00000000000000000000000000000100"; -- 计算 PC + 4
 
---                    -- 计算下一个 PC 值
---                    if br_taken = '1' then
---                    -- 如果有分支，则更新 PCNext
---                    -- 注意：这里需要根据您的分支逻辑来计算分支目标地址
---                    -- 例如: PCNext <= 分支目标地址;
---                    else
---                        PCNext <= PCPlus4;
---                    end if;
+                    -- count next PC
 
-                    -- 更新状态以转移到下一个阶段
-                    State <= ID; -- 转到译码阶段
+
+                    -- Next State
+                    State <= ID; 
                 when ID =>
-                    -- 译码逻辑
-                    -- ... (从 controller.v 提取和转换)
+                    -- Instruction Decode 
                     
                     case opcode is
                         when "0010011" =>  -- I-type Arithmetic
                             immsrc <= "001"; -- Immediate source for I-type instructions
-                            alu_op <= "0000"; -- ALU operation for ADD
+                            -- ALU operation based on funct3 and funct7
+                            if funct3 = "000" then
+                                alu_op <= "0000"; -- ALU operation for ADDI
+                            elsif funct3 = "010" then
+                                alu_op <= "0011"; -- ALU operation for SLTI
+                            elsif funct3 = "011" then
+                                alu_op <= "0100"; -- ALU operation for SLTIU
+                            elsif funct3 = "100" then
+                                alu_op <= "0101"; -- ALU operation for XORI
+                            elsif funct3 = "110" then
+                                alu_op <= "1000"; -- ALU operation for ORI
+                            elsif funct3 = "111" then
+                                alu_op <= "1001"; -- ALU operation for ANDI
+                            elsif funct7 = "0000000" and funct3 = "001" then
+                                alu_op <= "0010"; -- ALU operation for SLLI
+                            elsif funct7 = "0000000" and funct3 = "101" then
+                                alu_op <= "0110"; -- ALU operation for SRLI
+                            elsif funct7 = "0100000" and funct3 = "101" then
+                                alu_op <= "0111"; -- ALU operation for SRAI
+                            else
+                                alu_op <= "1111"; -- ALU operation for default Nah
+                            end if;
                             reg_wr <= '1'; -- Enable register write
                             sel_A <= '0'; -- Select source A from register
                             sel_B <= '1'; -- Select source B from immediate value
@@ -281,10 +289,28 @@ begin
                         when "0110011" =>  -- R-type Arithmetic
                             immsrc <= "000"; -- No immediate for R-type instructions
                             -- ALU operation based on funct3 and funct7
-                            if funct7 = "0100000" and funct3 = "000" then
-                                alu_op <= "0001"; -- ALU operation for SUB
-                            else
+                            if funct7 = "0000000" and funct3 = "000" then
                                 alu_op <= "0000"; -- ALU operation for ADD
+                            elsif funct7 = "0100000" and funct3 = "000" then
+                                alu_op <= "0001"; -- ALU operation for SUB
+                            elsif funct7 = "0000000" and funct3 = "001" then
+                                alu_op <= "0010"; -- ALU operation for SLL
+                            elsif funct7 = "0000000" and funct3 = "010" then
+                                alu_op <= "0011"; -- ALU operation for SLT
+                            elsif funct7 = "0000000" and funct3 = "011" then
+                                alu_op <= "0100"; -- ALU operation for SLTU
+                            elsif funct7 = "0000000" and funct3 = "100" then
+                                alu_op <= "0101"; -- ALU operation for XOR
+                            elsif funct7 = "0000000" and funct3 = "101" then
+                                alu_op <= "0110"; -- ALU operation for SRL
+                            elsif funct7 = "0100000" and funct3 = "101" then
+                                alu_op <= "0111"; -- ALU operation for SRA
+                            elsif funct7 = "0000000" and funct3 = "110" then
+                                alu_op <= "1000"; -- ALU operation for OR
+                            elsif funct7 = "0000000" and funct3 = "111" then
+                                alu_op <= "1001"; -- ALU operation for AND
+                            else
+                                alu_op <= "1111"; -- ALU operation for default Nah
                             end if;
                             reg_wr <= '1'; -- Enable register write
                             sel_A <= '0'; -- Select source A from register
@@ -387,31 +413,26 @@ begin
                     end case;
                     state <= EX;
                 when EX =>
-                    -- 执行逻辑
-                    -- ... (从 datapath.v 提取和转换)
-                    -- 根据指令类型选择ALU操作
-                    -- 例如，如果指令是加法，则设置ALU的选择信号为加法
---                        alu_op <= "0000"; -- 从译码阶段得到的ALU操作码
-                    -- 设置ALU的操作数
-                    alu_a <= srcA; -- 可能是寄存器的输出或立即数
-                    alu_b <= srcB; -- 可能是寄存器的输出或立即数
-                
-                    -- 评估分支条件
-                    -- 例如，如果指令是分支指令，则设置分支单元的输入并读取其输出
---                        br_taken <= 0; -- 分支单元的输出
-                
-                    -- 如果指令需要访问内存，则设置内存访问的控制信号
-                    -- 如果指令需要写回结果，则设置写回阶段的控制信号
-                
-                    -- 在执行完必要的操作后，转到下一个状态
-                    -- 如果有分支且分支被采纳，则可能需要更新PC值
-                    if br_taken = '1' then
-                        -- 更新PC值为分支目标地址
-                        PC <= PCPlus4;
+                    -- Execute Logic
+                   
+                    
+                    alu_a <= srcA; -- alu_a is always the register
+                    if sel_B = '0' then
+                        alu_b <= srcB; -- alu_b from source B
+                    else
+                        alu_b <= immsrc; -- alu_b from immediate 
                     end if;
                 
-                    -- 根据当前指令的需要，转到下一个阶段
-                    state <= MEM; -- 转到内存访问阶段，或者如果指令不需要访问内存，则直接转到写回阶段
+                    -- TO DO (milestone 3)
+                    -- BRANCH FOR CONNECTION 
+--                        br_taken <= 0; 
+
+--                    if br_taken = '1' then
+--                        PC <= PCPlus4;
+--                    end if;
+                
+                    -- next state 
+                    state <= MEM; 
                 when MEM =>
                     -- Memory access logic
                     if readcontrol /= "000" then
@@ -431,24 +452,22 @@ begin
                     -- After completing the memory access, move to the next state.
                     state <= WB; -- Go to the Write Back stage.
                 when WB =>
-                    -- 写回逻辑
-                    -- ... (从 datapath.v 提取和转换)
-                            -- Write back logic
+                    -- Write back logic
                     reg_write <= '1';  -- Enable writing to the register file
---                    write_addr <= destination_register;  -- 设置目标寄存器地址
+--                  write_addr <= destination_register;  
                     -- write_data is already selected by the mux_wb_instance
                     -- ...
             
-                    -- 在完成写回操作后，转到下一个状态或重置状态机
+                    -- to reset state 
                     -- ...
                     state <= IFI;
                 when others =>
-                    State <= IFI;
+                    state <= IFI;
             end case;
         end if;
     end process;
 
-    -- 其他逻辑实现
+    -- To Do other connection logic
     -- ...
 
 end Behavioral;
