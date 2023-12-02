@@ -36,6 +36,9 @@ The DataMemory.vhd module in VHDL serves as a data storage unit in a processor d
 
 tb_DataMemory: Firstly, reset signal is tested by converting the signal rst. Then a 32 bits values are input using the 32 bits writing instruction, and the 8 bits reading instruction is used to read the last 8 bits of the value I stored before. The test for instruction memory module is included in this testbench.
 
+<img width="1470" alt="data_memory" src="https://github.com/ShouzheLi/NYURV32I/assets/149827789/96f3dcce-1b62-467c-a158-18cf1e9eae2e">
+
+
 ## INSTRUCTION MEMORY
 
 The InstructionMemory.vhd is a VHDL module designed to store and provide instruction data for a processor. It accepts a 32-bit input address (addr) and outputs a corresponding 32-bit instruction (instr). The module utilizes an internal memory array, with each address storing a distinct instruction. This setup simulates an instruction memory in digital systems, serving as a repository of executable instructions that the processor fetches and decodes during operation. This module is crucial for the processor's instruction fetch phase, enabling the sequential execution of program instructions.
@@ -48,12 +51,17 @@ The PC.vhd is a VHDL module that functions as a Program Counter in digital syste
 
 tb_PC: Convert the input values of reset signal and enable signal to check the function of them.
 
+<img width="1470" alt="pc_test" src="https://github.com/ShouzheLi/NYURV32I/assets/149827789/c73d80e8-451e-4a64-bc07-e476ec5ae14c">
+
 
 ## REGISTER FILE
 
 The InstructionMemory.vhd is a VHDL module representing a read-only memory that stores program instructions. It accepts a 32-bit address input addr, which specifies the memory location to be accessed. The module outputs a 32-bit instruction instr corresponding to the input address. This module essentially simulates the behavior of an instruction memory in a processor, where it retrieves stored instructions based on the program counter's value, aiding in the sequential execution of a program.
 
 tb_RegisterFile: firstly, the values of signal rst and write enable are changed to check the reset functon. Then the write instructions are used to store the value x"11111111" in the register with index "1", and the value x"22222222" in the register with index "2".
+
+<img width="1470" alt="register_test" src="https://github.com/ShouzheLi/NYURV32I/assets/149827789/7e26c0a3-5848-4983-b06e-f9c64376f6b8">
+
 
 ## BRANCH
 
