@@ -20,6 +20,23 @@ This module takes in a 32-bit instruction (instr), an opcode (opcode), function 
 
 The module's internal Finite State Machine (FSM) navigates through stages like Instruction Fetch (IFI), Decode (ID), Execute (EX), Memory Access (MEM), and Write Back (WB), reflecting a typical instruction cycle in a processor. In each stage, the control unit generates and updates control signals based on the current instruction's needs. For instance, in the Decode stage, it sets signals for the ALU operation and source selection, while in the Execute stage, it might evaluate branch conditions or execute an ALU operation.
 
-## DATAMEMORY
+## DATA MEMORY
 
 The DataMemory.vhd module in VHDL serves as a data storage unit in a processor design. It interfaces with the processor through a 32-bit address input (address), data input (writedata), and outputs a 32-bit data (read_data). The module operates on clock (clk) and reset (rst) signals. It supports read and write operations governed by control signals readcontrol and writecontrol, which determine the size and type of the data operation (byte, halfword, or word). The module is essential for the processor's memory operations, allowing it to store and retrieve data as per the program's requirements, playing a pivotal role in the execution of load/store instructions.
+
+## INSTRUCTION MEMORY
+
+The InstructionMemory.vhd is a VHDL module designed to store and provide instruction data for a processor. It accepts a 32-bit input address (addr) and outputs a corresponding 32-bit instruction (instr). The module utilizes an internal memory array, with each address storing a distinct instruction. This setup simulates an instruction memory in digital systems, serving as a repository of executable instructions that the processor fetches and decodes during operation. This module is crucial for the processor's instruction fetch phase, enabling the sequential execution of program instructions.
+
+## PROGRAM COUNTER
+
+The PC.vhd is a VHDL module that functions as a Program Counter in digital systems. It has a 32-bit output pc that holds the current instruction address. The module updates this address based on the input signal pc_next, synchronized with the clock clk. A reset input rst is used to initialize or reset the counter. This module is essential in sequential logic, driving the instruction fetch process by pointing to the next instruction to be executed in a program.
+
+
+## REGISTER FILE
+
+The InstructionMemory.vhd is a VHDL module representing a read-only memory that stores program instructions. It accepts a 32-bit address input addr, which specifies the memory location to be accessed. The module outputs a 32-bit instruction instr corresponding to the input address. This module essentially simulates the behavior of an instruction memory in a processor, where it retrieves stored instructions based on the program counter's value, aiding in the sequential execution of a program.
+
+## BRANCH
+
+The branch.vhd is a VHDL module designed to determine branching conditions in a computational process. It accepts two 32-bit inputs a and b, representing comparison operands, and a 3-bit input branch_type to specify the type of branch condition (e.g., BEQ, BNE). The module outputs a single bit branch_taken, which signals whether the branch condition is met. This module plays a critical role in controlling the flow of a program, deciding if the next instruction sequence should be altered based on the comparison result.
