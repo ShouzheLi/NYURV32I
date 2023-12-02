@@ -85,9 +85,11 @@ begin
                 temp_result <= a and b;
                 overload <= '0';  -- Logical operation does not cause overflow
             
-            -- when others =>
-                -- temp_result <= (others => '0');
-                -- overload <= '0';  -- Default case does not cause overflow
+
+           when others =>
+               temp_result <= (others => '0');
+               overload <= '0';  -- Default case does not cause overflow
+
             
             -- Other cases remain the same...
 
