@@ -22,6 +22,8 @@ This module takes in a 32-bit instruction (instr), an opcode (opcode), function 
 
 The module's internal Finite State Machine (FSM) navigates through stages like Instruction Fetch (IFI), Decode (ID), Execute (EX), Memory Access (MEM), and Write Back (WB), reflecting a typical instruction cycle in a processor. In each stage, the control unit generates and updates control signals based on the current instruction's needs. For instance, in the Decode stage, it sets signals for the ALU operation and source selection, while in the Execute stage, it might evaluate branch conditions or execute an ALU operation.
 
+tb_Control: The reset signal is tested firstly, and then check the module passes or fails by the value of output signal hlt.
+
 ## DATA MEMORY
 
 The DataMemory.vhd module in VHDL serves as a data storage unit in a processor design. It interfaces with the processor through a 32-bit address input (address), data input (writedata), and outputs a 32-bit data (read_data). The module operates on clock (clk) and reset (rst) signals. It supports read and write operations governed by control signals readcontrol and writecontrol, which determine the size and type of the data operation (byte, halfword, or word). The module is essential for the processor's memory operations, allowing it to store and retrieve data as per the program's requirements, playing a pivotal role in the execution of load/store instructions.
