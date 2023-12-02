@@ -14,6 +14,12 @@ The ALU.vhd module in VHDL is designed to perform various arithmetic and logical
 
 tb_ALU: Each different instruction is selected by assigning the corresponding value to signal alu_sel. Then, in the test for each instruction, the values of a and b are assigned and assert statements are used to check if the output values in signal alu_result and overload are correct or not.
 
+<img width="1470" alt="alu1" src="https://github.com/ShouzheLi/NYURV32I/assets/149827789/69083e11-a0c9-497a-900a-fa02bba8da6b">
+
+<img width="1470" alt="alu2" src="https://github.com/ShouzheLi/NYURV32I/assets/149827789/3e23bf54-fe5b-4d71-adea-daa35cbef153">
+
+
+
 ## CONTROL_UNIT
 
 The ControlUnit.vhd module is a key component in VHDL for orchestrating the operation of a processor. It acts as the brain of the processor, interpreting the opcode and function codes from the incoming instruction and generating the necessary control signals to guide data flow and operation throughout the processor's sub-modules.
