@@ -72,9 +72,9 @@ begin
             -- Standard memory read
             case readcontrol is
                 when "000" =>  -- Read Byte
-                    read_data <= (24 downto 0 => '0') & data_mem_file(index)(7 downto 0);
+                    read_data <= (23 downto 0 => '0') & data_mem_file(index)(7 downto 0);
                 when "001" =>  -- Read Halfword
-                    read_data <= (16 downto 0 => '0') & data_mem_file(index)(15 downto 0);
+                    read_data <= (15 downto 0 => '0') & data_mem_file(index)(15 downto 0);
                 when "010" =>  -- Read Word
                     read_data <= data_mem_file(index);
                 when others =>

@@ -43,8 +43,13 @@ architecture Behavioral of Control_Unit is
     signal alu_a, alu_b, alu_result : STD_LOGIC_VECTOR(31 downto 0);
 
     signal write_data : STD_LOGIC_VECTOR(31 downto 0);
-    signal write_addr : STD_LOGIC_VECTOR(4 downto 0);
+    signal rd1_data : STD_LOGIC_VECTOR(31 downto 0);
+    signal rd2_data : STD_LOGIC_VECTOR(31 downto 0);
+    signal write_address : STD_LOGIC_VECTOR(31 downto 0);
+    signal rd1_address : STD_LOGIC_VECTOR(31 downto 0);
+    signal rd2_address : STD_LOGIC_VECTOR(31 downto 0);
     signal reg_write : STD_LOGIC;
+
 
     -- Instance declaration of Program Counter
     component ProgramCounter is
@@ -101,15 +106,17 @@ architecture Behavioral of Control_Unit is
     end component;
 
     component register_file is
-        Port (
-            clk : in STD_LOGIC;
-            rst : in STD_LOGIC;
-            reg_write : in STD_LOGIC;
-            write_data : in STD_LOGIC_VECTOR(31 downto 0);
-            write_addr : in STD_LOGIC_VECTOR(4 downto 0);
-            read_data1 : out STD_LOGIC_VECTOR(31 downto 0);
-            read_data2 : out STD_LOGIC_VECTOR(31 downto 0)
-        );
+    Port (
+        clk : in STD_LOGIC;
+        we3 : in STD_LOGIC;    -- This must match the write enable port in the actual entity
+        rst : in STD_LOGIC;
+        a1 : in STD_LOGIC_VECTOR(4 downto 0);    -- Read address 1
+        a2 : in STD_LOGIC_VECTOR(4 downto 0);    -- Read address 2
+        a3 : in STD_LOGIC_VECTOR(4 downto 0);    -- Write address
+        wd3 : in STD_LOGIC_VECTOR(31 downto 0);  -- Write data
+        rd1 : out STD_LOGIC_VECTOR(31 downto 0); -- Read data 1
+        rd2 : out STD_LOGIC_VECTOR(31 downto 0)  -- Read data 2
+    );
     end component;
     
     component data_memory is
@@ -166,17 +173,18 @@ begin
         instr => instr
     );
 
-    -- Instantiation of Instruction Fetch
+    -- Inside your architecture, where you are mapping the instruction_fetch component
     InstFetch: instruction_fetch Port Map (
         instr => instr,
-        opcode => opcode,
-        rd => rdata,
-        funct3 => funct3,
-        rs1 => rd1,
-        rs2 => rd2,
-        funct7 => funct7,
-        imm => immsrc
+        opcode => instr(6 downto 0),               -- The opcode field is typically the first 7 bits
+        rd => instr(11 downto 7),                  -- The rd field is typically 5 bits
+        funct3 => instr(14 downto 12),             -- The funct3 field is typically 3 bits
+        rs1 => instr(19 downto 15),                -- The rs1 field is typically 5 bits
+        rs2 => instr(24 downto 20),                -- The rs2 field is typically 5 bits
+        funct7 => instr(31 downto 25),             -- The funct7 field is typically 7 bits
+        imm => instr(31 downto 7)                  -- Adjust the imm field according to your design needs
     );
+
 
     -- Instance of ALU
     alu_instance : alu
@@ -199,14 +207,18 @@ begin
         );
 
     -- Instance of Register File for write back operation
+    -- Instance of Register File for write back operation
     reg_file_instance : register_file
         Port Map (
             clk => clk,
+            we3 => reg_write,    -- reg_write signal in ControlUnit must connect to we3 in register_file
             rst => rst,
-            reg_write => reg_write,
-            write_data => write_data,
-            write_addr => write_addr
-            -- Connect read ports if necessary
+            a1 => rd1_address(4 downto 0),   -- Make sure these signals exist in your ControlUnit architecture
+            a2 => rd2_address(4 downto 0),
+            a3 => write_address(4 downto 0),
+            wd3 => write_data,
+            rd1 => rd1_data,     -- Make sure these signals exist in your ControlUnit architecture
+            rd2 => rd2_data
         );
     
     -- Instance of Register File for write back operation
@@ -216,7 +228,7 @@ begin
             rst => rst,
             readcontrol => readcontrol,
             writecontrol => writecontrol,
-            address => write_addr,
+            address => write_address,
             writedata => write_data,
             read_data => rdata
         );
@@ -420,7 +432,7 @@ begin
                     if sel_B = '0' then
                         alu_b <= srcB; -- alu_b from source B
                     else
-                        alu_b <= immsrc; -- alu_b from immediate 
+                        alu_b <= "00000000000000000000" & instr(31 downto 20); -- alu_b from immediate 
                     end if;
                 
                     -- TO DO (milestone 3)

@@ -21,7 +21,7 @@ begin
     process(addr)
     variable translated_index : integer;
     begin
-        translated_index := to_integer(unsigned(addr - BASE_ADDRESS)) / 4;
+        translated_index := to_integer(unsigned(addr) - unsigned(BASE_ADDRESS)) / 4;
         if translated_index >= 0 and translated_index < memory'length then
             instr <= memory(translated_index); -- Output the instruction at the translated index
         else
