@@ -1,0 +1,44 @@
+--library IEEE;
+--use IEEE.STD_LOGIC_1164.ALL;
+--use IEEE.STD_LOGIC_ARITH.ALL;
+--use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+--package Def is
+--    constant R_type : std_logic_vector(2 downto 0) := "011";
+--    constant I_type : std_logic_vector(2 downto 0) := "001";
+--    constant I_type_load : std_logic_vector(2 downto 0) := "000";
+--    constant S_type : std_logic_vector(2 downto 0) := "010";
+--    constant B_type : std_logic_vector(2 downto 0) := "110";
+--    constant J_type : std_logic_vector(2 downto 0) := "101";
+--    constant U_type_LUI : std_logic_vector(2 downto 0) := "100";
+--    constant U_type_AUIPC : std_logic_vector(2 downto 0) := "111";
+
+--    constant ADD : std_logic_vector(3 downto 0) := "0000";
+--    constant SUB : std_logic_vector(3 downto 0) := "0001";
+--    constant XOR : std_logic_vector(3 downto 0) := "0010";
+--    constant OR : std_logic_vector(3 downto 0) := "0011";
+--    constant AND : std_logic_vector(3 downto 0) := "0100";
+--    constant SLL : std_logic_vector(3 downto 0) := "0101";
+--    constant SRL : std_logic_vector(3 downto 0) := "0110";
+--    constant SRA : std_logic_vector(3 downto 0) := "0111";
+--    constant SLT : std_logic_vector(3 downto 0) := "1000";
+--    constant SLTU : std_logic_vector(3 downto 0) := "1001";
+--    constant BEQ : std_logic_vector(3 downto 0) := "1010";
+--    constant BNE : std_logic_vector(3 downto 0) := "1011";
+--    constant BLT : std_logic_vector(3 downto 0) := "1100";
+--    constant BGE : std_logic_vector(3 downto 0) := "1101";
+--    constant BLTU : std_logic_vector(3 downto 0) := "1110";
+--    constant BGEU : std_logic_vector(3 downto 0) := "1111";
+--    constant JALR : std_logic_vector(3 downto 0) := "10000";
+--    constant ERR : std_logic_vector(3 downto 0) := "10001";
+
+--    constant J_type_JAL : std_logic_vector(3 downto 0) := "1011";
+--    constant I_type_JALR : std_logic_vector(3 downto 0) := "1111";
+--    constant R_type_out : std_logic_vector(3 downto 0) := "0001";
+--    constant I_type_out : std_logic_vector(3 downto 0) := "0010";
+--    constant S_type_out : std_logic_vector(3 downto 0) := "0100";
+--    constant B_type_out : std_logic_vector(3 downto 0) := "1100";
+--    constant U_type_LUI_out : std_logic_vector(3 downto 0) := "0110";
+--    constant U_type_AUIPC_out : std_logic_vector(3 downto 0) := "1000";
+--    constant I_type_load_out : std_logic_vector(3 downto 0) := "0000";
+--end package Def;
