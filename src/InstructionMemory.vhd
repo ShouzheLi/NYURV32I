@@ -23,7 +23,7 @@ architecture Behavioral of instruction_memory is
         others => (others => '0')
     );
 begin
-
+    
     -- Concurrent statement to output the instruction based on pc
     instr <= instr_mem(to_integer(unsigned(pc) - unsigned(BASE_ADDRESS)) / 4);
 

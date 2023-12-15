@@ -18,7 +18,7 @@ begin
     begin
         if rst = '1' then
             pc <= x"01000000";
-        elsif rising_edge(clk) then
+        elsif not rising_edge(clk) then
             pc <= pc_next;
         end if;
     end process;
