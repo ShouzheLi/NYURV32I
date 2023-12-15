@@ -21,7 +21,7 @@ begin
     temp_a <= signed(a);
     temp_b <= signed(b);
 
-    process(a, b, alu_sel)
+    process(temp_a, temp_b, alu_sel)
     begin
         -- Default output
         temp_result <= (others => '0');

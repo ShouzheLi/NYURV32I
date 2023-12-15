@@ -26,7 +26,7 @@ architecture Behavioral of data_memory is
 begin
     process(clk, rst)
     begin
-        if rising_edge(rst) then
+        if rst = '1' then
             -- Reset the data memory to zero
             for i in 0 to data_mem_file'high loop
                 data_mem_file(i) <= (others => '0');

@@ -1,31 +1,66 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use std.textio.all;
 
-entity InstructionMemory is
+entity instruction_memory is
     Port (
-        addr : in STD_LOGIC_VECTOR(31 downto 0);   -- Input address (byte-addressed)
-        instr : out STD_LOGIC_VECTOR(31 downto 0)  -- Output instruction (word)
+        
+        pc : in std_logic_vector(31 downto 0);
+        instr : out std_logic_vector(31 downto 0)
     );
-end InstructionMemory;
+end instruction_memory;
 
-architecture Behavioral of InstructionMemory is
-    -- Instruction memory is 2KB, and we assume it is word-indexed and 32-bits wide.
-    -- Since the memory starts at 0x01000000, we need to adjust the input addresses accordingly.
+architecture Behavioral of instruction_memory is
     constant BASE_ADDRESS : std_logic_vector(31 downto 0) := x"01000000";
-    type memory_type is array (0 to 511) of STD_LOGIC_VECTOR(31 downto 0); -- 2KBytes / 4 bytes per word = 512 words
-    signal memory : memory_type := (others => (others => '0'));
-begin
-    -- Perform address translation from byte address to word index.
-    -- Subtract the base address then shift right by 2 (equivalent to dividing by 4 to get word indexing).
-    process(addr)
-    variable translated_index : integer;
+    type memory_type is array (natural range <>) of std_logic_vector(31 downto 0);
+    signal instr_mem : memory_type(0 to 511);
+
+    procedure Load_Memory_From_File(file_name : in string; mem : out memory_type) is
+        file mem_file : text;
+        variable line : line;
+        variable line_num : integer := 0;
+        variable mem_word : bit_vector(31 downto 0);
+        variable good : boolean;
     begin
-        translated_index := to_integer(unsigned(addr) - unsigned(BASE_ADDRESS)) / 4;
-        if translated_index >= 0 and translated_index < memory'length then
-            instr <= memory(translated_index); -- Output the instruction at the translated index
-        else
-            instr <= (others => '0'); -- Output zeros if the address is outside the memory range
-        end if;
+        file_open(mem_file, file_name, read_mode);
+        while not endfile(mem_file) loop
+            readline(mem_file, line);
+            read(line, mem_word, good);
+            if good then
+                mem(line_num) := to_stdlogicvector(mem_word);
+                line_num := line_num + 1;
+            end if;
+        end loop;
+        file_close(mem_file);
+    end procedure;
+
+
+begin
+    -- Call the procedure to load memory from a file during initialization
+    init : process 
+    variable mem_variable : memory_type(0 to 511);
+    file mem_file : text;
+        variable line : line;
+        variable line_num : integer := 0;
+        variable mem_word : bit_vector(31 downto 0);
+        variable good : boolean;
+    begin
+        file_open(mem_file, "instruction.mem", read_mode);
+        while not endfile(mem_file) loop
+            readline(mem_file, line);
+            read(line, mem_word, good);
+            if good then
+                instr_mem(line_num) <= to_stdlogicvector(mem_word);
+                line_num := line_num + 1;
+            end if;
+        end loop;
+        file_close(mem_file);
+        wait;
     end process;
+
+    -- Concurrent statement to output the instruction based on pc
+
+    instr <= instr_mem(to_integer(unsigned(pc) - unsigned(BASE_ADDRESS)) / 4);
+
 end Behavioral;
