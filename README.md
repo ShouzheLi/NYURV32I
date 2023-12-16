@@ -76,3 +76,4 @@ The branch.vhd is a VHDL module designed to determine branching conditions in a 
   High Level Test with RC5
   use RC5 encrption to encode instruction.mem and instruction2.mem into instruction_cypher.mem. Then test instruction_cypher.mem in opposite direction to see if it can be decoded sucessfully.
 ### VIDEO FOR RESULT
+check FPGA_video.mov
