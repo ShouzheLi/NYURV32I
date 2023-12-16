@@ -71,7 +71,8 @@ The branch.vhd is a VHDL module designed to determine branching conditions in a 
 ### Complete design and functionality of the processor
 ### TEST
   High Level Test
-  <img width="1470" alt="Binary" src="https://github.com/ShouzheLi/NYURV32I/assets/149827789/7e26c0a3-5848-4983-b06e-f9c64376f6b8">
+  <img width="1470" alt="Binary" src=["https://github.com/ShouzheLi/NYURV32I/assets/149827789/7e26c0a3-5848-4983-b06e-f9c64376f6b8"](https://github.com/ShouzheLi/NYURV32I/blob/28518905a98f6b92cbe4f57f0e0aabedb388f54d/Binary%20process%20steps.png)>
+  
   High Level Test with RC5
   use RC5 encrption to encode instruction.mem and instruction2.mem into instruction_cypher.mem. Then test instruction_cypher.mem in opposite direction to see if it can be decoded sucessfully.
 ### VIDEO FOR RESULT
