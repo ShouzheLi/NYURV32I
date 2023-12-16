@@ -68,6 +68,10 @@ tb_RegisterFile: firstly, the values of signal rst and write enable are changed 
 The branch.vhd is a VHDL module designed to determine branching conditions in a computational process. It accepts two 32-bit inputs a and b, representing comparison operands, and a 3-bit input branch_type to specify the type of branch condition (e.g., BEQ, BNE). The module outputs a single bit branch_taken, which signals whether the branch condition is met. This module plays a critical role in controlling the flow of a program, deciding if the next instruction sequence should be altered based on the comparison result.
 
 ## UPDATE FOR MILESTONE3 !!!!
-###
+### Complete design and functionality of the processor
 ### TEST
+  High Level Test
+  <img width="1470" alt="Binary" src="https://github.com/ShouzheLi/NYURV32I/assets/149827789/7e26c0a3-5848-4983-b06e-f9c64376f6b8">
+  High Level Test with RC5
+  use RC5 encrption to encode instruction.mem and instruction2.mem into instruction_cypher.mem. Then test instruction_cypher.mem in opposite direction to see if it can be decoded sucessfully.
 ### VIDEO FOR RESULT
